@@ -1108,3 +1108,11 @@ GLFWAPI void glfwPostEmptyEvent(void)
     _glfwPlatformPostEmptyEvent();
 }
 
+GLFWAPI int glfwEpollAddOrRemoveFDs(int epoll_fd, int external_fd, int add) {
+  return _glfwPlatformEpollAddOrRemoveFDs(epoll_fd, external_fd, add);
+}
+
+GLFWAPI int glfwEpollHandleEvents(int epoll_fd, int timer_fd, void(* task_handle)(void * data), void * data, int timeout) {
+  return _glfwPlatformEpollHandleEvents(epoll_fd, timer_fd, task_handle, data, timeout);
+}
+

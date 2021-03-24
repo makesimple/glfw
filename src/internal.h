@@ -58,6 +58,34 @@
 
 #define _GLFW_MESSAGE_SIZE      1024
 
+// Just for using epoll
+#if defined(NDEBUG)
+
+#define FML_HANDLE_EINTR(x)                                 \
+  ({                                                        \
+    int eintr_wrapper_result;                       \
+    do {                                                    \
+      eintr_wrapper_result = (x);                           \
+    } while (eintr_wrapper_result == -1 && errno == EINTR); \
+    eintr_wrapper_result;                                   \
+  })
+
+#else
+
+#define FML_HANDLE_EINTR(x)                                  \
+  ({                                                         \
+    int eintr_wrapper_counter = 0;                           \
+    int eintr_wrapper_result;                        \
+    do {                                                     \
+      eintr_wrapper_result = (x);                            \
+    } while (eintr_wrapper_result == -1 && errno == EINTR && \
+             eintr_wrapper_counter++ < 100);                 \
+    eintr_wrapper_result;                                    \
+  })
+
+#endif  // NDEBUG
+
+
 typedef int GLFWbool;
 
 typedef struct _GLFWerror       _GLFWerror;
@@ -690,6 +718,10 @@ void _glfwPlatformPollEvents(void);
 void _glfwPlatformWaitEvents(void);
 void _glfwPlatformWaitEventsTimeout(double timeout);
 void _glfwPlatformPostEmptyEvent(void);
+
+int _glfwPlatformEpollAddOrRemoveFDs(int epoll_fd, int external_fd, int add);
+int _glfwPlatformEpollHandleEvents(int epoll_fd, int timer_fd, void(* task_handle)(void * data), void * data, int timeout);
+
 
 EGLenum _glfwPlatformGetEGLPlatform(EGLint** attribs);
 EGLNativeDisplayType _glfwPlatformGetEGLNativeDisplay(void);

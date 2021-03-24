@@ -36,7 +36,7 @@ cmake_dependent_option(GLFW_USE_OSMESA "Use OSMesa for offscreen context creatio
                        "UNIX" OFF)
 cmake_dependent_option(GLFW_USE_HYBRID_HPG "Force use of high-performance GPU on hybrid systems" OFF
                        "WIN32" OFF)
-cmake_dependent_option(GLFW_USE_WAYLAND "Use Wayland for window creation" OFF
+cmake_dependent_option(GLFW_USE_WAYLAND "Use Wayland for window creation" ON
                        "UNIX;NOT APPLE" OFF)
 cmake_dependent_option(USE_MSVC_RUNTIME_LIBRARY_DLL "Use MSVC runtime library DLL" ON
                        "MSVC" OFF)

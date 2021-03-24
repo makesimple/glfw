@@ -4187,6 +4187,10 @@ GLFWAPI void glfwWaitEventsTimeout(double timeout);
  */
 GLFWAPI void glfwPostEmptyEvent(void);
 
+// Just for flutter platform threading
+GLFWAPI int glfwEpollAddOrRemoveFDs(int epoll_fd, int external_fd, int add);
+GLFWAPI int glfwEpollHandleEvents(int epoll_fd, int timer_fd, void(* task_handle)(void * data), void * data, int timeout);
+
 /*! @brief Returns the value of an input option for the specified window.
  *
  *  This function returns the value of an input option for the specified window.

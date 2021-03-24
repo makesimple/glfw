@@ -38,6 +38,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/timerfd.h>
+#include <sys/epoll.h>
 #include <poll.h>
 
 
@@ -702,6 +703,113 @@ static void incrementCursorImage(_GLFWwindow* window)
     }
 }
 
+static int epollAddOrRemoveFDs(int epoll_fd, int external_fd, int add) {
+  struct wl_display* display = _glfw.wl.display;
+  int fds[] = {
+      wl_display_get_fd(display),
+      _glfw.wl.timerfd,
+      _glfw.wl.cursorTimerfd,
+      external_fd,
+    };
+  int sz = sizeof(fds) / sizeof(fds[0]);
+  int ctl_result = 0;
+  for (int i = 0; i < sz; i++) {
+    struct epoll_event event = {};
+    event.events = EPOLLIN;
+    event.data.fd = fds[i];
+    ctl_result = epoll_ctl(epoll_fd, add ? EPOLL_CTL_ADD : EPOLL_CTL_DEL, fds[i], &event);
+    if (ctl_result != 0) {
+      return ctl_result;
+    }
+  }
+  return 0;
+}
+
+static int epollHandleEvents(int epoll_fd, int timer_fd, void(*task_handle)(void *data), void *data, int timeout)
+{
+    struct wl_display* display = _glfw.wl.display;
+    int fds[] = {
+        wl_display_get_fd(display),
+        _glfw.wl.timerfd,
+        _glfw.wl.cursorTimerfd,
+    };
+
+    ssize_t read_ret;
+    uint64_t repeats, i;
+
+    while (wl_display_prepare_read(display) != 0)
+        wl_display_dispatch_pending(display);
+
+    // If an error different from EAGAIN happens, we have likely been
+    // disconnected from the Wayland session, try to handle that the best we
+    // can.
+    if (wl_display_flush(display) < 0 && errno != EAGAIN)
+    {
+        _GLFWwindow* window = _glfw.windowListHead;
+        while (window)
+        {
+            _glfwInputWindowCloseRequest(window);
+            window = window->next;
+        }
+        wl_display_cancel_read(display);
+        return -1;
+    }
+
+    struct epoll_event event = {};
+
+    int epoll_result = FML_HANDLE_EINTR(epoll_wait(epoll_fd, &event, 1, timeout));
+    // Errors are fatal.
+    if (event.events & (EPOLLERR | EPOLLHUP)) {
+      wl_display_cancel_read(display);
+      return -1;
+    }
+
+    // Timeouts are fatal since we specified an infinite timeout already.
+    // Likewise, > 1 is not possible since we waited for one result.
+    if (epoll_result != 1) {
+      wl_display_cancel_read(display);
+      return -1;
+    }
+
+    if (event.data.fd == fds[0])
+    {
+        wl_display_read_events(display);
+        wl_display_dispatch_pending(display);
+        return 0;
+    } else {
+        wl_display_cancel_read(display);
+    }
+
+    if (event.data.fd == timer_fd) {
+      task_handle(data);
+      return 0;
+    }
+
+    if (event.data.fd == fds[1]) {
+        read_ret = read(_glfw.wl.timerfd, &repeats, sizeof(repeats));
+        if (read_ret != 8)
+            return -1;
+        if (_glfw.wl.keyboardFocus)
+        {
+            for (i = 0; i < repeats; ++i)
+            {
+                _glfwInputKey(_glfw.wl.keyboardFocus,
+                              _glfw.wl.keyboardLastKey,
+                              _glfw.wl.keyboardLastScancode,
+                              GLFW_REPEAT,
+                              _glfw.wl.xkb.modifiers);
+            }
+        }
+    } else if (event.data.fd == fds[2]) {
+        read_ret = read(_glfw.wl.cursorTimerfd, &repeats, sizeof(repeats));
+        if (read_ret != 8)
+            return -1;
+        incrementCursorImage(_glfw.wl.pointerFocus);
+    }
+    return 0;
+}
+
+
 static void handleEvents(int timeout)
 {
     struct wl_display* display = _glfw.wl.display;
@@ -1181,6 +1289,14 @@ void _glfwPlatformWaitEventsTimeout(double timeout)
 void _glfwPlatformPostEmptyEvent(void)
 {
     wl_display_sync(_glfw.wl.display);
+}
+
+int _glfwPlatformEpollAddOrRemoveFDs(int epoll_fd, int external_fd, int add) {
+  return epollAddOrRemoveFDs(epoll_fd, external_fd, add);
+}
+
+int _glfwPlatformEpollHandleEvents(int epoll_fd, int timer_fd, void(* task_handle)(void * data), void * data, int timeout) {
+  return epollHandleEvents(epoll_fd, timer_fd, task_handle, data, timeout);
 }
 
 void _glfwPlatformGetCursorPos(_GLFWwindow* window, double* xpos, double* ypos)
