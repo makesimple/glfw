@@ -2,66 +2,72 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-_checkout_dir = "//third_party/wayland_glfw"
-
-config("relative_wayland_glfw_headers") {
-  include_dirs = [ "$_checkout_dir/include" ]
+config("config") {
+  include_dirs = [
+    "//flutter/third_party/wayland_glfw/include",
+    "//flutter/third_party",
+    "//flutter",
+  ]
 }
 
 source_set("wayland_glfw") {
   public = [
-    "$_checkout_dir/include/GLFW/glfw3.h",
-    "$_checkout_dir/include/GLFW/glfw3native.h",
+    "include/GLFW/glfw3.h",
+    "include/GLFW/glfw3native.h",
   ]
 
   sources = [
-    "$_checkout_dir/src/context.c",
-    "$_checkout_dir/src/init.c",
-    "$_checkout_dir/src/input.c",
-    "$_checkout_dir/src/monitor.c",
-    "$_checkout_dir/src/vulkan.c",
-    "$_checkout_dir/src/window.c",
+    "src/context.c",
+    "src/init.c",
+    "src/input.c",
+    "src/monitor.c",
+    "src/vulkan.c",
+    "src/window.c",
   ]
 
-  include_dirs = [ "$_checkout_dir/src" ]
-
-  public_configs = [ ":relative_glfw_headers" ]
+  include_dirs = [ "src" ]
 
   if (is_win) {
     sources += [
-      "$_checkout_dir/src/egl_context.c",
-      "$_checkout_dir/src/egl_context.h",
-      "$_checkout_dir/src/wgl_context.c",
-      "$_checkout_dir/src/wgl_context.h",
-      "$_checkout_dir/src/win32_init.c",
-      "$_checkout_dir/src/win32_joystick.c",
-      "$_checkout_dir/src/win32_joystick.h",
-      "$_checkout_dir/src/win32_monitor.c",
-      "$_checkout_dir/src/win32_platform.h",
-      "$_checkout_dir/src/win32_time.c",
-      "$_checkout_dir/src/win32_tls.c",
-      "$_checkout_dir/src/win32_window.c",
+      "src/egl_context.c",
+      "src/egl_context.h",
+      "src/wgl_context.c",
+      "src/wgl_context.h",
+      "src/win32_init.c",
+      "src/win32_joystick.c",
+      "src/win32_joystick.h",
+      "src/win32_monitor.c",
+      "src/win32_platform.h",
+      "src/win32_time.c",
+      "src/win32_tls.c",
+      "src/win32_window.c",
     ]
 
     defines = [ "_GLFW_WIN32" ]
   } else if (is_linux) {
     sources += [
-      "$_checkout_dir/src/egl_context.c",
-      "$_checkout_dir/src/egl_context.h",
-      "$_checkout_dir/src/glx_context.c",
-      "$_checkout_dir/src/glx_context.h",
-      "$_checkout_dir/src/linux_joystick.c",
-      "$_checkout_dir/src/linux_joystick.h",
-      "$_checkout_dir/src/posix_time.c",
-      "$_checkout_dir/src/posix_time.h",
-      "$_checkout_dir/src/posix_tls.c",
-      "$_checkout_dir/src/posix_tls.h",
-      "$_checkout_dir/src/wl_init.c",
-      "$_checkout_dir/src/wl_monitor.c",
-      "$_checkout_dir/src/wl_platform.h",
-      "$_checkout_dir/src/wl_window.c",
-      "$_checkout_dir/src/xkb_unicode.c",
-      "$_checkout_dir/src/xkb_unicode.h",
+      "src/egl_context.c",
+      "src/egl_context.h",
+      "src/linux_joystick.c",
+      "src/linux_joystick.h",
+      "src/posix_time.c",
+      "src/posix_time.h",
+      "src/posix_thread.c",
+      "src/posix_thread.h",
+      "src/wl_init.c",
+      "src/wl_monitor.c",
+      "src/wl_platform.h",
+      "src/wl_window.c",
+      "src/osmesa_context.c",
+      "src/osmesa_context.h",
+      "src/xkb_unicode.c",
+      "src/xkb_unicode.h",
+      "src/wayland-idle-inhibit-unstable-v1-client-protocol.c",
+      "src/wayland-pointer-constraints-unstable-v1-client-protocol.c",
+      "src/wayland-relative-pointer-unstable-v1-client-protocol.c",
+      "src/wayland-viewporter-client-protocol.c",
+      "src/wayland-xdg-decoration-client-protocol.c",
+      "src/wayland-xdg-shell-client-protocol.c",
     ]
 
     defines = [
@@ -78,24 +84,24 @@ source_set("wayland_glfw") {
     ]
   } else if (is_mac) {
     sources += [
-      "$_checkout_dir/src/cocoa_init.m",
-      "$_checkout_dir/src/cocoa_joystick.h",
-      "$_checkout_dir/src/cocoa_joystick.m",
-      "$_checkout_dir/src/cocoa_monitor.m",
-      "$_checkout_dir/src/cocoa_platform.h",
-      "$_checkout_dir/src/cocoa_time.c",
-      "$_checkout_dir/src/cocoa_window.m",
-      "$_checkout_dir/src/nsgl_context.h",
-      "$_checkout_dir/src/nsgl_context.m",
-      "$_checkout_dir/src/posix_tls.c",
-      "$_checkout_dir/src/posix_tls.h",
+      "src/cocoa_init.m",
+      "src/cocoa_joystick.h",
+      "src/cocoa_joystick.m",
+      "src/cocoa_monitor.m",
+      "src/cocoa_platform.h",
+      "src/cocoa_time.c",
+      "src/cocoa_window.m",
+      "src/nsgl_context.h",
+      "src/nsgl_context.m",
+      "src/posix_tls.c",
+      "src/posix_tls.h",
     ]
 
     defines = [ "_GLFW_COCOA" ]
 
     cflags = [ "-Wno-deprecated-declarations" ]
   }
-
+  public_configs = [ ":config" ]
   configs -= [ "//build/config/compiler:chromium_code" ]
   configs += [ "//build/config/compiler:no_chromium_code" ]
 }
