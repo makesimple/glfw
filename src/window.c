@@ -1109,10 +1109,18 @@ GLFWAPI void glfwPostEmptyEvent(void)
 }
 
 GLFWAPI int glfwEpollAddOrRemoveFDs(int epoll_fd, int external_fd, int add) {
+#ifdef _GLFW_WAYLAND
   return _glfwPlatformEpollAddOrRemoveFDs(epoll_fd, external_fd, add);
+#else
+  return 0;
+#endif
 }
 
 GLFWAPI int glfwEpollHandleEvents(int epoll_fd, int timer_fd, void(* task_handle)(void * data), void * data, int timeout) {
+#ifdef _GLFW_WAYLAND
   return _glfwPlatformEpollHandleEvents(epoll_fd, timer_fd, task_handle, data, timeout);
+#else
+  return 0;
+#endif
 }
 
