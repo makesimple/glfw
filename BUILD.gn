@@ -1,21 +1,19 @@
 # Copyright 2013 The Flutter Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-
 config("config") {
   include_dirs = [
-    "//flutter/third_party/wayland_glfw/include",
+    "//flutter/third_party/mina_glfw/include",
     "//flutter/third_party",
     "//flutter",
   ]
 }
 
-source_set("wayland_glfw") {
+source_set("mina_glfw") {
   public = [
     "include/GLFW/glfw3.h",
     "include/GLFW/glfw3native.h",
   ]
-
   sources = [
     "src/context.c",
     "src/init.c",
@@ -74,6 +72,7 @@ source_set("wayland_glfw") {
       "_GLFW_WAYLAND",
       "HAVE_XKBCOMMON_COMPOSE_H",
       "HAVE_MEMFD_CREATE",
+      "_GLFW_BUILD_DLL",
     ]
 
     libs = [
